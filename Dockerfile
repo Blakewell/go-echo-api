@@ -2,7 +2,7 @@ FROM golang:1.12-alpine AS GO_BUILD
 
 RUN apk add --no-cache git
 
-COPY ./src /code
+COPY api /code
 WORKDIR /code
 RUN go build -o /go/bin/server/api
 

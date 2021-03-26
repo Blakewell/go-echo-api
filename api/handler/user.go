@@ -7,26 +7,39 @@ import (
 	"net/http"
 )
 
-func MakeUserHandlers(e *echo.Echo, service *user.Service) {
+type UserService struct {
+	service user.Service
+}
 
-	e.GET("/users", func(context echo.Context) error {
-		all, err := service.FindAll()
-		if err == nil {
-			return context.JSON(http.StatusOK, all)
-		}
+func MakeUserHandlers(e *echo.Echo, service *user.Service) UserService {
+
+	var userService = UserService{
+		service: *service,
+	}
+
+	e.GET("/users", userService.findAllUsers)
+	e.POST("/users", userService.addUser)
+
+	return userService
+}
+
+func (s *UserService) findAllUsers(context echo.Context) error {
+	all, err := s.service.FindAll()
+	if err == nil {
+		return context.JSON(http.StatusOK, all)
+	}
+	return err
+}
+
+func (s *UserService) addUser(context echo.Context) error {
+
+	u := new(entity.User)
+	if err := context.Bind(u); err != nil {
 		return err
-	})
+	}
 
-	e.POST("/users", func(context echo.Context) error {
+	uID, _ := s.service.Store(u)
 
-		u := new(entity.User)
-		if err := context.Bind(u); err != nil {
-			return err
-		}
+	return context.JSON(http.StatusCreated, uID)
 
-		uID, _ := service.Store(u)
-
-		return context.JSON(http.StatusCreated, uID)
-
-	})
 }
